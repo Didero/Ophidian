@@ -144,7 +144,14 @@ class CardTreeview(ScrollableTreeview):
 		valuelist = [(self.treeview.set(item, sortColumn), item) for item in self.treeview.get_children()]
 		# Numbers need different sorting, otherwise '100' gets sorted above '2'
 		if self.columnsDisplayData[sortColumn]['type'] in ('number', 'widenumber'):
-			valuelist.sort(reverse=sortReversed, key=lambda v: float(v[0]) if v[0] != '' else '')
+			def numberconversion(key):
+				if key[0] == '':
+					return -1000  # This makes sure empty values are sorted as the lowest instead of the highest
+				try:
+					return float(key[0])
+				except ValueError:
+					return key[0]
+			valuelist.sort(reverse=sortReversed, key=numberconversion)
 		else:
 			valuelist.sort(reverse=sortReversed)
 
