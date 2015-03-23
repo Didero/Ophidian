@@ -132,10 +132,9 @@ class ChosenCardsFrame(Tkinter.Frame):
 			with open(targetLocation, 'w') as deckfile:
 				if deckname:
 					deckfile.write(deckname + '\n')
-				for cardname, cardcount in cardDict['deck'].iteritems():
-					deckfile.write(u"{} {}\n".format(cardcount, cardname).encode('utf-8'))
-				for cardname, cardcount in cardDict['sideboard'].iteritems():
-					deckfile.write(u"SB: {} {}\n".format(cardcount, cardname).encode('utf-8'))
+				for decktype, prefix in (('deck', ''), ('sideboard', 'SB: ')):
+					for cardname, cardcount in cardDict[decktype].iteritems():
+						deckfile.write(u"{}{} {}\n".format(prefix, cardcount, GlobalValues.cards[cardname]['name']).encode('utf-8'))
 			saveSuccesful = True
 		else:
 			print "ERROR: Unknown save format '{}'!".format(saveformat)
