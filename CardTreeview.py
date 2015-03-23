@@ -142,7 +142,12 @@ class CardTreeview(ScrollableTreeview):
 		# From here: http://stackoverflow.com/questions/1966929/tk-treeview-column-sort
 		# First make a list of all the items and the value of that column
 		valuelist = [(self.treeview.set(item, sortColumn), item) for item in self.treeview.get_children()]
-		valuelist.sort(reverse=sortReversed)
+		# Numbers need different sorting, otherwise '100' gets sorted above '2'
+		if self.columnsDisplayData[sortColumn]['type'] in ('number', 'widenumber'):
+			valuelist.sort(reverse=sortReversed, key=lambda v: float(v[0]) if v[0] != '' else '')
+		else:
+			valuelist.sort(reverse=sortReversed)
+
 
 		# Now put the items in the treeview in their proper place
 		for index, (value, item) in enumerate(valuelist):
