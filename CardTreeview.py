@@ -139,32 +139,33 @@ class CardTreeview(ScrollableTreeview):
 		self.currentlySelectedCard = None
 
 	def sortByColumn(self, sortColumn, sortReversed):
-		# From here: http://stackoverflow.com/questions/1966929/tk-treeview-column-sort
-		# First make a list of all the items and the value of that column
-		valuelist = [(self.treeview.set(item, sortColumn), item) for item in self.treeview.get_children()]
+		# Adapted from here: http://stackoverflow.com/questions/1966929/tk-treeview-column-sort
+		# First make a list of tuples. First is the item name, second is the column value, third is the count
+		valuelist = [(item, self.treeview.set(item, sortColumn), self.treeview.set(item, 'count')) for item in self.treeview.get_children()]
 		# Numbers need different sorting, otherwise '100' gets sorted above '2'
 		if self.columnsDisplayData[sortColumn]['type'] in ('number', 'widenumber'):
 			def numberconversion(key):
-				if key[0] == '':
+				if key[1] == '':
 					return -1000  # This makes sure empty values are sorted as the lowest instead of the highest
 				try:
-					return float(key[0])
+					return float(key[1])
 				except ValueError:
-					return key[0]
+					return key[1]
 			valuelist.sort(reverse=sortReversed, key=numberconversion)
 		else:
-			valuelist.sort(reverse=sortReversed)
-
+			valuelist.sort(reverse=sortReversed, key=lambda k: k[1])  # the lambda is needed to make it sort on column value instead of name
 
 		selectedCard = self.treeview.selection()[0] if len(self.treeview.selection()) > 0 else None
 		# Now put the items in the treeview in their proper place
-		for index, (value, item) in enumerate(valuelist):
-			self.treeview.move(item, '', index)
+		#  Deleting and re-adding is about 2 to 3 times faster than moving the items
+		self.clearCardlist()
+		for (item, value, count) in valuelist:
+			self.addCard(item, count)
+		# Scroll to the currently selected card
 		if selectedCard:
 			self.selectCard(selectedCard)
 
 		self.sortedByColumn = sortColumn
-
 		# After the sort, set the column to sort in the other direction next time it's clicked
 		self.treeview.heading(sortColumn, command=lambda: self.sortByColumn(sortColumn, not sortReversed))
 
