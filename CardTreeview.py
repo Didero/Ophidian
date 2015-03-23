@@ -1,3 +1,4 @@
+import time
 import Tkinter
 
 import GlobalValues
@@ -7,7 +8,6 @@ from ScrollableTreeview import ScrollableTreeview
 class CardTreeview(ScrollableTreeview):
 	cardNamesToDisplay = []
 	sortedByColumn = 'name'
-
 	columnsOrder = ('count', 'name', 'cmc', 'type', 'power', 'toughness')
 	columnsDisplayData = {'count': {'type': 'number', 'displayname': '#'},
 						  'name': {'type': 'text'},
@@ -19,6 +19,9 @@ class CardTreeview(ScrollableTreeview):
 					  'number': {'width': 30, 'minwidth': 30, 'anchor': Tkinter.CENTER},
 					  'widenumber': {'width': 40, 'minwidth': 30, 'anchor': Tkinter.CENTER}}
 
+	lastSelectionTime = 0
+	currentlySelectedCard = None
+
 	def __init__(self, parentFrame, width, height, listtype):
 		ScrollableTreeview.__init__(self, parentFrame, width=width, height=height)
 
@@ -26,6 +29,7 @@ class CardTreeview(ScrollableTreeview):
 		self.treeview.configure(selectmode='browse', columns=self.columnsOrder)
 		self.treeview['show'] = 'headings'  # Hide the first column
 		self.treeview.bind('<<TreeviewSelect>>', self.onCardSelection)  # Display card info when an item is selected
+		self.treeview.bind('<Double-1>', self.onDoubleClick)  # This handles a double click on an already selected card, onCardSelection() handles this for unselected cards
 
 		# Set up all the columns properly
 		for columnName in self.columnsOrder:
@@ -68,6 +72,7 @@ class CardTreeview(ScrollableTreeview):
 	def clearCardlist(self):
 		for child in self.treeview.get_children():
 			self.treeview.delete(child)
+		self.currentlySelectedCard = None
 
 	def removeCard(self, cardname):
 		if self.hasCard(cardname):
@@ -93,13 +98,30 @@ class CardTreeview(ScrollableTreeview):
 	def onCardSelection(self, *args):
 		selection = self.treeview.selection()
 		if len(selection) > 0:
-			GlobalValues.currentSelection = self.listtype
-			GlobalValues.cardDisplayFrame.displayCard(selection[0])
-			# If the clicked list wasn't a search list, clear the search list selection
-			if self.listtype != GlobalValues.DISPLAY_SEARCH:
-				GlobalValues.searchResultsFrame.clearSelection()
-			# The ChosenCards frame handles its own selection changes
-			GlobalValues.chosenCardsFrame.setSelectionType(self.listtype)
+			self.treeview.focus_set()  # Scrolling now moves this treeview
+			selection = selection[0]  # The selection is a tuple with one element. Simplify that
+			# Check if an unselected card was double-clicked
+			if self.listtype == GlobalValues.DISPLAY_SEARCH and self.currentlySelectedCard == selection and time.time() - self.lastSelectionTime <= 0.5:
+				GlobalValues.chosenCardsFrame.addCard(selection, GlobalValues.DISPLAY_DECK)
+				GlobalValues.chosenCardsFrame.deckTreeview.selectCard(selection)
+			else:
+				GlobalValues.currentSelection = self.listtype
+				GlobalValues.cardDisplayFrame.displayCard(selection)
+				# If the clicked list wasn't a search list, clear the search list selection
+				if self.listtype != GlobalValues.DISPLAY_SEARCH:
+					GlobalValues.searchResultsFrame.clearSelection()
+				# The ChosenCards frame handles its own selection changes
+				GlobalValues.chosenCardsFrame.setSelectionType(self.listtype)
+			# Store selection data for next time
+			self.lastSelectionTime = time.time()
+			self.currentlySelectedCard = selection
+
+	def onDoubleClick(self, *args):
+		if self.listtype == GlobalValues.DISPLAY_SEARCH:
+			# Double-clicking an item in the search list should add the card to the deck
+			selectedCard = self.treeview.selection()[0]
+			GlobalValues.chosenCardsFrame.addCard(selectedCard, GlobalValues.DISPLAY_DECK)
+			GlobalValues.chosenCardsFrame.deckTreeview.selectCard(selectedCard)
 
 	def selectCard(self, cardname):
 		if self.hasCard(cardname):
@@ -114,6 +136,7 @@ class CardTreeview(ScrollableTreeview):
 
 	def clearSelection(self):
 		self.treeview.selection_remove(self.treeview.selection())
+		self.currentlySelectedCard = None
 
 	def sortByColumn(self, sortColumn, sortReversed):
 		# From here: http://stackoverflow.com/questions/1966929/tk-treeview-column-sort
