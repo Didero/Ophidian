@@ -21,7 +21,7 @@ class MainApp(object):
 		# TODO: Handle window resizing (distributing extra space to columns, probably the columns with treeviews first
 		GlobalValues.root = Tkinter.Tk()
 
-		GlobalValues.root.title("Ophidian - MTG Card Searcher and Deck Builder v0.1.0")
+		GlobalValues.root.title("Ophidian - MTG Card Searcher and Deck Builder v0.1.1")
 		# 'Ophidian'? It's both the larger snake species, an MTG creature and a D&D snake-like monster
 		#  Get it? Snake? Python? Anyway the D&D Ophidian turns creatures it bites into Ophidians, and the
 		#   Ophidian MTG creature allows you to draw a card if it attacks unopposed. Both are kind of apt
