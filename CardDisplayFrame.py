@@ -167,9 +167,16 @@ class CardDisplayFrame(Tkinter.Frame):
 			print u"Image for '{}/{}' too large, changing size from {}, {} to {}, {} (ratio {})".format(setname, cardname, width, height, maxwidth, newheight, ratio)
 			GlobalValues.statusbar.addMessage(u"Image for card '{}' is too large, shrinking to {:.0f}%".format(ratio * 100))
 			img = img.resize((int(maxwidth), int(round(newheight))), Image.ANTIALIAS)
-		img = ImageTk.PhotoImage(img)
-		self.cardImageLabel.configure(text='', image=img)
-		self.cardImageLabel.image = img  # Store a reference to the Image instance, otherwise it gets garbage-collected
+		try:
+			img = ImageTk.PhotoImage(img)
+		except IOError as e:
+			GlobalValues.statusbar.addMessage("ERROR displaying image for '{}' ({})".format(cardname, e.message))
+			self.cardImageLabel.configure(text='')
+			# Delete the offending image, redownloading might fix the problem
+			os.remove(self.constructCardImagePath(setname, cardname))
+		else:
+			self.cardImageLabel.configure(text='', image=img)
+			self.cardImageLabel.image = img  # Store a reference to the Image instance, otherwise it gets garbage-collected
 
 	def downloadCardImage(self, setname, cardname):
 		# Create these variables outside the try-catch so we can always reference them in the catch
