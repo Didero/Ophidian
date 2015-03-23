@@ -156,9 +156,12 @@ class CardTreeview(ScrollableTreeview):
 			valuelist.sort(reverse=sortReversed)
 
 
+		selectedCard = self.treeview.selection()[0] if len(self.treeview.selection()) > 0 else None
 		# Now put the items in the treeview in their proper place
 		for index, (value, item) in enumerate(valuelist):
 			self.treeview.move(item, '', index)
+		if selectedCard:
+			self.selectCard(selectedCard)
 
 		self.sortedByColumn = sortColumn
 
