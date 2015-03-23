@@ -15,11 +15,13 @@ class Statusbar(Tkinter.Frame):
 		self.label = Tkinter.Label(self)
 		self.label.grid(column=0, row=0, sticky=Tkinter.W)
 
-	def addMessage(self, message):
-		self.messageQueue.append(message)
-		# If there's no update loop going right now, set it off
-		if not self.isUpdateLoopRunning:
-			self.updateDisplayedMessage()
+	def addMessage(self, message, ignoreDuplicates=False):
+		# Prevent the message queue being filled up with identical messages, for instance if a card without multiverseId is selected multiple times
+		if ignoreDuplicates or message not in self.messageQueue:
+			self.messageQueue.append(message)
+			# If there's no update loop going right now, set it off
+			if not self.isUpdateLoopRunning:
+				self.updateDisplayedMessage()
 
 	def updateDisplayedMessage(self):
 		messagesLeft = len(self.messageQueue)
